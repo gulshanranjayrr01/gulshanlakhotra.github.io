@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz Game - Gulshan</title>
+  <style>
+    :root{
+      --blue:#007bff;
+      --dark:#333;
+      --green:#28a745;
+      --red:#ff4d4d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:#ffffff;
+      color:var(--dark);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* Top bar */
+    .topbar{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 12px;
+      background:transparent;
+      z-index:50;
+    }
+    .settings-btn{
+      font-size:22px;
+      background:none;
+      border:none;
+      cursor:pointer;
+      color:var(--dark);
+    }
+    /* Updated Name Style */
+    .heading{
+      position:fixed;
+      top:12px;
+      right:16px;
+      color:var(--blue);
+      font-weight:700;
+      font-style:italic;
+      font-size:16px;
+      letter-spacing:0.5px;
+      z-index:60;
+    }
+
+    .wrap{
+      padding-top:80px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    h1{
+      color:var(--blue);
+      margin:8px 0 18px;
+      font-size:28px;
+    }
+    .card{
+      width:92%;
+      max-width:420px;
+      background:#f9f9f9;
+      padding:18px;
+      border-radius:12px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.07);
+      text-align:center;
+    }
+    .btn{
+      display:inline-block;
+      border:none;
+      background:var(--blue);
+      color:#fff;
+      padding:12px 18px;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:16px;
+      margin:8px 6px;
+    }
+    .btn.secondary{background:#6c757d;}
+    .small{font-size:13px;padding:8px 12px;border-radius:6px}
+
+    .quiz-container{max-width:420px;width:92%;margin:20px auto}
+    .question-card{
+      background:#fff;
+      border-radius:10px;
+      padding:16px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    }
+    .question{font-size:18px;margin-bottom:12px}
+    .answers{display:flex;flex-direction:column;gap:8px}
+    .answer-btn{
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      cursor:pointer;
+      font-size:15px;
+      background:var(--blue);
+      color:#fff;
+    }
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    #timer{color:var(--red);font-weight:700}
+    #score{color:var(--green);font-weight:700}
+
+    .drawer{
+      position:fixed;
+      left:-320px;
+      top:0;
+      width:320px;
+      height:100%;
+      background:#ffffff;
+      box-shadow:6px 0 18px rgba(0,0,0,0.12);
+      transition:left .28s ease;
+      z-index:100;
+      padding:18px;
+    }
+    .drawer.open{left:0}
+    .drawer h3{margin-top:8px;color:var(--blue)}
+    .drawer .close-btn{background:none;border:none;font-size:20px;cursor:pointer;position:absolute;right:12px;top:12px}
+    .field{margin:10px 0}
+    label{display:block;font-size:13px;color:#444;margin-bottom:6px}
+    input[type="text"], select{
+      width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px
+    }
+    .record-list{max-height:200px;overflow:auto;border:1px dashed #eee;padding:8px;border-radius:8px}
+    .record-item{font-size:14px;padding:6px 4px;border-bottom:1px solid #f1f1f1}
+    .muted{font-size:13px;color:#666;margin-top:12px}
+    .game-over{text-align:center;padding:18px;}
+    @media(max-width:420px){.drawer{width:86%}}
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <button class="settings-btn" id="openSettings" title="Settings">☰</button>
+  </div>
+
+  <!-- Updated Name Style -->
+  <div class="heading">Gulshan Lakhotra</div>
+
+  <div class="drawer" id="drawer">
+    <button class="close-btn" id="closeDrawer">✕</button>
+    <h3>Settings</h3>
+
+    <div class="field">
+      <label>Profile Name</label>
+      <input type="text" id="profileName" placeholder="Enter name" />
+    </div>
+
+    <div class="field">
+      <label>Select number of questions</label>
+      <select id="numQuestions">
+        <option value="10">10 Questions</option>
+        <option value="20">20 Questions</option>
+        <option value="30">30 Questions</option>
+        <option value="40">40 Questions</option>
+        <option value="50">50 Questions</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Old Records</label>
+      <div class="record-list" id="recordList"></div>
+    </div>
+
+    <div class="field">
+      <label>Update</label>
+      <div style="padding:8px;background:#f5f8ff;border-radius:8px;font-size:14px">
+        App v1.1 — Random questions every game + name in cursive bold style.
+      </div>
+    </div>
+
+    <div style="margin-top:10px">
+      <button class="btn small" id="saveSettings">Save Settings</button>
+      <button class="btn small secondary" id="clearRecords">Clear Records</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h1>Quiz Game</h1>
+    <div class="card">
+      <p>Welcome to the quiz. Press Start to begin.</p>
+      <div style="margin-top:12px">
+        <button class="btn" id="startBtn">Start Game</button>
+        <button class="btn secondary" id="openSettingsBtn">Settings</button>
+      </div>
+      <div class="muted">Each game will have random questions.</div>
+    </div>
+
+    <div class="quiz-container" id="quizArea" style="display:none">
+      <div class="question-card" id="questionCard">
+        <div class="question" id="questionText">Question text</div>
+        <div class="answers" id="answersBox"></div>
+        <div class="meta">
+          <div id="timer">Time left: 10s</div>
+          <div id="score">Score: 0</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameOverArea" style="display:none; max-width:420px; width:92%;">
+      <div class="card game-over">
+        <h2 id="gameOverTitle">Game Over</h2>
+        <p id="finalScore">Your score: 0</p>
+        <div>
+          <button class="btn" id="restartBtn">Play Again</button>
+          <button class="btn secondary" id="homeBtn">Home</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const BANK = [
+  {q:"What is the capital of India?", a:["Mumbai","New Delhi","Kolkata","Chennai"], c:1},
+  {q:"Which planet is known as the Red Planet?", a:["Earth","Mars","Jupiter","Venus"], c:1},
+  {q:"Who wrote 'Hamlet'?", a:["Charles Dickens","William Shakespeare","Leo Tolstoy","Mark Twain"], c:1},
+  {q:"Which gas do plants absorb from the atmosphere?", a:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"], c:2},
+  {q:"Which is the largest ocean on Earth?", a:["Atlantic","Indian","Pacific","Arctic"], c:2},
+  {q:"Who is known as the father of computers?", a:["Charles Babbage","Alan Turing","Bill Gates","Steve Jobs"], c:0},
+  {q:"What is the national animal of India?", a:["Peacock","Tiger","Elephant","Lion"], c:1},
+  {q:"How many continents are there on Earth?", a:["5","6","7","8"], c:2},
+  {q:"Which is the smallest planet?", a:["Mercury","Venus","Mars","Pluto"], c:0},
+  {q:"What is H2O commonly known as?", a:["Salt","Water","Hydrogen","Oxygen"], c:1}
+];
+
+let profileName = localStorage.getItem('quiz_profile_name') || 'Gulshan';
+let records = JSON.parse(localStorage.getItem('quiz_records') || '[]');
+let settings = JSON.parse(localStorage.getItem('quiz_settings') || '{"numQuestions":10}');
+document.getElementById('profileName').value = profileName;
+document.getElementById('numQuestions').value = settings.numQuestions;
+renderRecords();
+
+function renderRecords(){
+  const list = document.getElementById('recordList');
+  list.innerHTML = records.length ? records.map(r=>`<div class='record-item'>${r.date} — ${r.name} — ${r.score}/${r.total}</div>`).join('') : '<div>No records yet</div>';
+}
+
+document.getElementById('openSettings').onclick=()=>drawer.classList.add('open');
+document.getElementById('closeDrawer').onclick=()=>drawer.classList.remove('open');
+document.getElementById('openSettingsBtn').onclick=()=>drawer.classList.add('open');
+document.getElementById('saveSettings').onclick=()=>{
+  profileName=document.getElementById('profileName').value||'Gulshan';
+  settings.numQuestions=parseInt(document.getElementById('numQuestions').value);
+  localStorage.setItem('quiz_profile_name',profileName);
+  localStorage.setItem('quiz_settings',JSON.stringify(settings));
+  alert('Saved!');
+  drawer.classList.remove('open');
+};
+document.getElementById('clearRecords').onclick=()=>{
+  if(confirm('Clear all records?')){records=[];localStorage.setItem('quiz_records','[]');renderRecords();}
+};
+
+let quiz=[],score=0,current=0,timer,timeLeft=10;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+function startGame(){
+  score=0;current=0;
+  quiz=[];
+  for(let i=0;i<settings.numQuestions;i++){quiz.push(BANK[Math.floor(Math.random()*BANK.length)]);}
+  document.querySelector('.card').style.display='none';
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('gameOverArea').style.display='none';
+  updateScore();
+  nextQ();
+}
+function nextQ(){
+  if(current>=quiz.length){endGame();return;}
+  const q=quiz[current];
+  document.getElementById('questionText').textContent=`Q${current+1}. ${q.q}`;
+  const box=document.getElementById('answersBox');box.innerHTML='';
+  q.a.forEach((ans,i)=>{
+    const b=document.createElement('button');
+    b.className='answer-btn';b.textContent=ans;
+    b.onclick=()=>check(i,q.c);
+    box.appendChild(b);
+  });
+  timeLeft=10;timerEl.textContent=`Time left: ${timeLeft}s`;
+  clearInterval(timer);
+  timer=setInterval(()=>{timeLeft--;timerEl.textContent=`Time left: ${timeLeft}s`;if(timeLeft<=0){clearInterval(timer);current++;nextQ();}},1000);
+}
+function check(i,c){clearInterval(timer);if(i===c)score++;current++;updateScore();setTimeout(()=>nextQ(),200);}
+function updateScore(){scoreEl.textContent=`Score: ${score}`;}
+function endGame(){
+  clearInterval(timer);
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('gameOverArea').style.display='block';
+  document.getElementById('gameOverTitle').textContent=`Well done, ${profileName}!`;
+  document.getElementById('finalScore').textContent=`Your score: ${score}/${quiz.length}`;
+  const rec={date:new Date().toLocaleString(),name:profileName,score,total:quiz.length};
+  records.push(rec);localStorage.setItem('quiz_records',JSON.stringify(records));renderRecords();
+}
+document.getElementById('startBtn').onclick=startGame;
+document.getElementById('restartBtn').onclick=startGame;
+document.getElementById('homeBtn').onclick=()=>{
+  document.querySelector('.card').style.display='block';
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('gameOverArea').style.display='none';
+};
+</script>
+</body>
+</html>
